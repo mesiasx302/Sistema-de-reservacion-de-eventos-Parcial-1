@@ -1,0 +1,4 @@
+.ddev/.import.yaml
+.DS_Store
+.env
+vendor/

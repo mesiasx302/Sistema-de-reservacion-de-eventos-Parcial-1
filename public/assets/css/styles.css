@@ -1,0 +1,13 @@
+body { background: #f5f7fb; }
+
+.navbar { box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+
+.card { border: 0; border-radius: 12px; }
+
+.card-header { background: #fff; border-bottom: 1px solid #edf0f4; padding: 1rem 1.25rem; }
+
+.table thead th { background: #f8f9fa; color: #495057; white-space: nowrap; }
+
+.table td, .table th { padding: .85rem 1rem; }
+
+.btn { border-radius: 8px; }
