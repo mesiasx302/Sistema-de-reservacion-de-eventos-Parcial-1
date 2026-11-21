@@ -328,7 +328,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 
 
-    
+
 
     switch ($accion) {
 
@@ -359,26 +359,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 
 
-// Obtener eventos
-
 $eventosVigentes = $eventosModel->vigentes();
 
 $eventosFinalizados = $eventosModel->finalizados();
 
-// Utilizar eventos vigentes para nuevas reservaciones.
-$eventos = $eventosVigentes;
-
-// Obtener todos los eventos para permitir editar cualquiera.
 $todosEventos = $eventosModel->todos();
-
-
-
-// Obtener clientes y reservaciones
-
 
 $clientes = $clientesModel->todos();
 
 $reservas = $reservasModel->todos();
+
+$eventos = array_values(array_filter(
+    $eventosVigentes,
+    function ($evento) use ($reservas) {
+
+        foreach ($reservas as $reserva) {
+
+            if (
+                (int) $reserva['evento_id'] === (int) $evento['evento_id'] &&
+                $reserva['estado'] === 'Activa'
+            ) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+));
 
 
 // Buscar evento para editar

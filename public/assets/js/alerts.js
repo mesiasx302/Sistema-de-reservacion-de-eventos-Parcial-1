@@ -27,19 +27,20 @@ if (hash) {
 
 
 function obtenerEstadoEvento(fechaInicio, fechaFin) {
-
     const ahora = new Date();
-
     const inicio = new Date(fechaInicio);
     const fin = fechaFin ? new Date(fechaFin) : null;
 
+    
     if (ahora < inicio) {
         return 'Pendiente';
     }
 
-    if (fin && ahora > fin) {
-        return 'Finalizado';
+
+    if (fin && ahora >= fin) {
+        return 'Finalizada';
     }
+
 
     return 'En curso';
 }
@@ -171,7 +172,7 @@ function actualizarContadoresEventos() {
 }
 
 
-// Revisar todos los eventos.
+
 
 function actualizarEstadosEventos() {
 
@@ -238,17 +239,17 @@ function actualizarEstadosEventos() {
 
 
 function actualizarEstadosReservaciones() {
-
     const filas = document.querySelectorAll(
         '#tabla-reservaciones tr[data-reserva-id]'
     );
 
     filas.forEach((fila) => {
-
         const estadoOriginal = fila.dataset.estadoOriginal;
 
-    
-        if (estadoOriginal === 'Cancelada') {
+        if (
+            estadoOriginal === 'Cancelada' ||
+            estadoOriginal === 'Finalizada'
+        ) {
             return;
         }
 
@@ -259,28 +260,20 @@ function actualizarEstadosReservaciones() {
             return;
         }
 
-        const estado = obtenerEstadoEvento(
-            fechaInicio,
-            fechaFin
-        );
+        const estado = obtenerEstadoEvento(fechaInicio, fechaFin);
 
-        const etiqueta = fila.querySelector(
-            '.estado-reservacion'
-        );
+        const etiqueta = fila.querySelector('.estado-reservacion');
 
         if (etiqueta) {
             actualizarEtiqueta(etiqueta, estado);
         }
 
-        
         if (estado === 'Finalizado') {
+            fila.dataset.estadoOriginal = 'Finalizada';
 
-            const formulario = fila.querySelector(
-                '.form-cancelar'
-            );
+            const formulario = fila.querySelector('.form-cancelar');
 
             if (formulario) {
-
                 formulario.remove();
 
                 const accion = document.createElement('span');
@@ -290,18 +283,14 @@ function actualizarEstadosReservaciones() {
                 fila.lastElementChild.appendChild(accion);
             }
         }
-
     });
 
-    const contador = document.getElementById(
-        'contador-reservaciones'
-    );
+    const contador = document.getElementById('contador-reservaciones');
 
     if (contador) {
         contador.textContent = filas.length;
     }
 }
-
 
 // Actualización automática en vivo
 
@@ -324,7 +313,7 @@ document.addEventListener('submit', function (evento) {
 
     const formulario = evento.target;
 
-    
+
     if (formulario.matches('.form-eliminar')) {
 
         evento.preventDefault();
@@ -350,7 +339,7 @@ document.addEventListener('submit', function (evento) {
     }
 
 
-    
+
     if (formulario.matches('.form-cancelar')) {
 
         evento.preventDefault();

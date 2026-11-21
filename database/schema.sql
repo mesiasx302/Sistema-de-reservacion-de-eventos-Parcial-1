@@ -44,7 +44,9 @@ CREATE TABLE IF NOT EXISTS Reservaciones (
     evento_id INT NOT NULL,
     cliente_id INT NOT NULL,
     fecha_reservacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    estado ENUM('Activa', 'Cancelada') NOT NULL DEFAULT 'Activa',
+
+    estado ENUM('Activa', 'Cancelada', 'Finalizada')
+        NOT NULL DEFAULT 'Activa',
 
     CONSTRAINT fk_reservacion_evento
         FOREIGN KEY (evento_id)
@@ -61,7 +63,6 @@ CREATE TABLE IF NOT EXISTS Reservaciones (
     INDEX idx_reservacion_evento_cliente (evento_id, cliente_id)
 
 ) ENGINE=InnoDB;
-
 
 -- =========================================
 -- DATOS INICIALES: EVENTOS

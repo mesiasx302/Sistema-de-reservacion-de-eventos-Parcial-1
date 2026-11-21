@@ -5,22 +5,34 @@ class Reservaciones
 {
     public function __construct(private PDO $db) {}
 
+    private function finalizarVencidas(): void
+    {
+        $sql = "
+            UPDATE Reservaciones r
+
+            INNER JOIN Eventos e
+                ON e.evento_id = r.evento_id
+
+            SET r.estado = 'Finalizada'
+
+            WHERE r.estado = 'Activa'
+            AND e.fecha_fin IS NOT NULL
+            AND e.fecha_fin <= NOW()
+        ";
+
+        $this->db->exec($sql);
+    }
+
     public function todos(): array
     {
+        $this->finalizarVencidas();
+
         $sql = "
             SELECT
                 r.reservacion_id,
+                r.evento_id,
                 r.fecha_reservacion,
-
-                CASE
-                    WHEN r.estado = 'Cancelada' THEN 'Cancelada'
-
-                    WHEN e.fecha_fin IS NOT NULL
-                    AND e.fecha_fin < NOW()
-                    THEN 'Finalizada'
-
-                    ELSE 'Activa'
-                END AS estado,
+                r.estado,
 
                 e.nombre AS evento,
                 e.fecha AS fecha_evento,
@@ -44,31 +56,33 @@ class Reservaciones
         return $this->db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
     }
 
-
     public function crear(int $eventoId, int $clienteId): bool
     {
+        $this->finalizarVencidas();
 
         $sqlVerificar = "
             SELECT COUNT(*)
             FROM Reservaciones
             WHERE evento_id = ?
-            AND cliente_id = ?
             AND estado = 'Activa'
         ";
 
         $stmtVerificar = $this->db->prepare($sqlVerificar);
-        $stmtVerificar->execute([$eventoId, $clienteId]);
+        $stmtVerificar->execute([$eventoId]);
 
         if ((int) $stmtVerificar->fetchColumn() > 0) {
             throw new InvalidArgumentException(
-                'Este cliente ya tiene una reservación activa para este evento.'
+                'Este evento ya tiene un cliente asignado. No se puede asignar otro mientras la reservación esté activa.'
             );
         }
 
-
         $sqlInsertar = "
-            INSERT INTO Reservaciones (evento_id, cliente_id)
-            VALUES (?, ?)
+            INSERT INTO Reservaciones (
+                evento_id,
+                cliente_id,
+                estado
+            )
+            VALUES (?, ?, 'Activa')
         ";
 
         return $this->db
@@ -76,21 +90,18 @@ class Reservaciones
             ->execute([$eventoId, $clienteId]);
     }
 
-
     public function cancelar(int $id): bool
     {
+        $this->finalizarVencidas();
+
         $sql = "
-            UPDATE Reservaciones rINNER JOIN Eventos e
-                ON e.evento_id = r.evento_id
+            UPDATE Reservaciones
 
-            SET r.estado = 'Cancelada'
+            SET estado = 'Cancelada'
 
-            WHERE r.reservacion_id = ?
-            AND r.estado = 'Activa'
-            AND (
-                    e.fecha_fin IS NULL
-                    OR e.fecha_fin >= NOW()
-            )";
+            WHERE reservacion_id = ?
+            AND estado = 'Activa'
+        ";
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute([$id]);
